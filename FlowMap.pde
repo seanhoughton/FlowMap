@@ -3,8 +3,8 @@ import cern.colt.*;
 float centerX = 12000;
 float centerY = -8000;
 float range = 50000;
-
-float dataRange = 50000;
+float dataRangeX = 50000;
+float dataRangeY = 50000;
 float rayLength = 300;
 float binSize = 300;
 float advection = 300;
@@ -54,11 +54,14 @@ void loadVelocities(String filename)
   String[] lines = loadStrings(filename);
   
   velocities = new ArrayList();
-  grid = new cern.colt.matrix.impl.SparseObjectMatrix2D((int)(dataRange/binSize), (int)(dataRange/binSize));
+
+  float minX=0, maxX=0, minY=0, maxY=0;
   
   for(int i=1; i < lines.length; ++i)
   {
     String[] pieces = split(lines[i], '\t');
+    if(pieces.length != 6)
+      continue;
     
     int numSamples = int(pieces[5]);
     if(numSamples < 30)
@@ -69,20 +72,44 @@ void loadVelocities(String filename)
     v.y = float(pieces[2]);
     v.vx = float(pieces[3]);
     v.vy = float(pieces[4]);
-    velocities.add(v);
     
+    minX = i==1 ? v.x : min(minX, v.x);
+    maxX = i==1 ? v.x : max(maxX, v.x);
+
+    minY = i==1 ? v.y : min(minY, v.y);
+    maxY = i==1 ? v.y : max(maxY, v.y);
+    
+    velocities.add(v);
+  }
+
+  dataRangeX = maxX - minX;
+  centerX = minX + (dataRangeX * 0.5);
+
+  dataRangeY = maxY - minY;
+  centerY = minY + (dataRangeY * 0.5);
+
+  range = max(dataRangeX, dataRangeY) * 1.1;
+  
+  //print("Range: " + range + "\n");
+  //print("Range[x]: " + minX + "," + centerX + "," + maxX + "\n");
+  //print("Range[y]: " + minY + "," + centerY + "," + maxY + "\n");
+  
+  grid = new cern.colt.matrix.impl.SparseObjectMatrix2D((int)(dataRangeX/binSize), (int)(dataRangeY/binSize));
+  for(int i=0; i < velocities.size(); ++i)
+  {
+    Velocity v = (Velocity)velocities.get(i);
     grid.setQuick(worldToGridX(v.x), worldToGridY(v.y), v);
   }
 }
 
 int worldToGridX(float wx)
 {
-  return (int)((wx + dataRange/2)/binSize);
+  return (int)((wx + dataRangeX*0.5)/binSize);
 }
 
 int worldToGridY(float wy)
 {
-  return (int)((wy + dataRange/2)/binSize);
+  return (int)((wy + dataRangeY*0.5)/binSize);
 }
 
 float screenToWorldX(int sx)
