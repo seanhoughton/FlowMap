@@ -1,0 +1,12 @@
+This is a basic visualizer tool for sparse velocity fields.
+
+Requirements:
+- Processing
+- The Colt math library (http://acs.lbl.gov/software/colt/)
+
+Data Format:
+The input format is a text file in tab delimited format. The
+first line is expected to be column names and is ignored. Each
+row should contain the following columns:
+
+ignored x y vx vy count
