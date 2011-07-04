@@ -1,21 +1,25 @@
 import cern.colt.*;
 
+// View Properties
 float centerX = 12000;
 float centerY = -8000;
 float range = 50000;
+float rayLength = 300;
+
+// Data Properties
 float dataRangeX = 50000;
 float dataRangeY = 50000;
-float rayLength = 300;
 float binSize = 300;
+
+// Particle properties
 float advection = 300;
 float viscosity = 0.95;
 int maxParticles = 20000;
 float maxParticleAge = 6;
-float killSafetyAge = 2;
-float killSpeed = 150;
+float killSafetyAge = 1;
+float killSpeed = 350;
 
-
-class Velocity
+class PointVelocity
 {
   public float x;
   public float y;
@@ -28,7 +32,7 @@ class Velocity
   }
 }
 
-class Particle extends Velocity
+class Particle extends PointVelocity
 {
   public float age;
 }
@@ -67,7 +71,7 @@ void loadVelocities(String filename)
     if(numSamples < 30)
       continue;
     
-    Velocity v = new Velocity();
+    PointVelocity v = new PointVelocity();
     v.x = float(pieces[1]);
     v.y = float(pieces[2]);
     v.vx = float(pieces[3]);
@@ -97,7 +101,7 @@ void loadVelocities(String filename)
   grid = new cern.colt.matrix.impl.SparseObjectMatrix2D((int)(dataRangeX/binSize), (int)(dataRangeY/binSize));
   for(int i=0; i < velocities.size(); ++i)
   {
-    Velocity v = (Velocity)velocities.get(i);
+    PointVelocity v = (PointVelocity)velocities.get(i);
     grid.setQuick(worldToGridX(v.x), worldToGridY(v.y), v);
   }
 }
@@ -153,7 +157,7 @@ void arrow(float x1, float y1, float x2, float y2)
 
 void draw()
 {
-  background(40);
+  background(20);
   
   float aspectRatio = (float)width / (float)height;
   ortho(centerX-range/2,
@@ -171,7 +175,7 @@ void draw()
 void spawnRandomParticle()
 {
   int index = (int)(random(1.0) * velocities.size()-1);
-  Velocity v = (Velocity)velocities.get(index);
+  PointVelocity v = (PointVelocity)velocities.get(index);
   Particle p = new Particle();
   p.x = v.x;
   p.y = v.y;
@@ -198,7 +202,7 @@ void updateParticles()
     Particle p = (Particle)particles.get(i);
     p.age += 0.016;
     
-    Velocity v = (Velocity)grid.getQuick(worldToGridX(p.x), worldToGridY(p.y));
+    PointVelocity v = (PointVelocity)grid.getQuick(worldToGridX(p.x), worldToGridY(p.y));
     
     float speed = p.speed();
     if(v == null || (p.age > killSafetyAge && speed < killSpeed) || p.age > maxParticleAge )
@@ -225,7 +229,7 @@ void drawParticles()
   float boxSize = 100;
   for(int i=0; i < particles.size(); ++i)
   {
-    Velocity v = (Velocity)particles.get(i);
+    PointVelocity v = (PointVelocity)particles.get(i);
     float pct = min(v.speed() / 3000, 1.0);
     color c = lerpColor(slowColor, fastColor, pct);
     fill(c);
@@ -238,7 +242,7 @@ void drawVelocities()
   stroke(100);
   for(int i=0; i < velocities.size(); ++i)
   {
-    Velocity v = (Velocity)velocities.get(i);
+    PointVelocity v = (PointVelocity)velocities.get(i);
     arrow(v.x, v.y, v.x+v.vx*rayLength, v.y+v.vy*rayLength);
   }
 }
