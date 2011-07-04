@@ -12,12 +12,16 @@ float dataRangeY = 50000;
 float binSize = 300;
 
 // Particle properties
-float advection = 300;
+float advection = 400;
 float viscosity = 0.95;
 int maxParticles = 20000;
 float maxParticleAge = 6;
 float killSafetyAge = 1;
 float killSpeed = 350;
+
+// draw options
+boolean shouldDrawVelocities = false;
+boolean shouldDrawStreams = true;
 
 class PointVelocity
 {
@@ -45,7 +49,7 @@ void setup()
 {
   size(1024,800,P3D);
   
-  loadVelocities("Direction.csv");
+  loadVelocities("Direction-509.csv");
   
   addMouseWheelListener(new java.awt.event.MouseWheelListener() { 
     public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) { 
@@ -56,6 +60,8 @@ void setup()
 void loadVelocities(String filename)
 {
   String[] lines = loadStrings(filename);
+  if(lines == null)
+    return;
   
   velocities = new ArrayList();
 
@@ -152,8 +158,7 @@ void arrow(float x1, float y1, float x2, float y2)
   line(0, 0, -arrowSize, -arrowSize);
   line(0, 0, arrowSize, -arrowSize);
   popMatrix();
-} 
-
+}
 
 void draw()
 {
@@ -168,8 +173,27 @@ void draw()
         10);
 
   update();
-  drawVelocities();
-  drawParticles();
+  
+  if(shouldDrawVelocities)
+    drawVelocities();
+    
+  if(shouldDrawStreams)
+    drawParticles();
+}
+
+void keyPressed()
+{
+  if(key == 'v')
+    shouldDrawVelocities = !shouldDrawVelocities;
+    
+  if(key == 's')
+    shouldDrawStreams = !shouldDrawStreams;
+    
+  if(key >= '0' && key <= '9')
+  {
+    String filename = "Direction-50" + key + ".csv";
+    loadVelocities(filename);
+  }
 }
 
 void spawnRandomParticle()
@@ -177,8 +201,8 @@ void spawnRandomParticle()
   int index = (int)(random(1.0) * velocities.size()-1);
   PointVelocity v = (PointVelocity)velocities.get(index);
   Particle p = new Particle();
-  p.x = v.x;
-  p.y = v.y;
+  p.x = v.x + binSize * random(1.0);
+  p.y = v.y + binSize * random(1.0);
   p.vx = v.vx * advection;
   p.vy = v.vy * advection;
   particles.add(p);
@@ -212,7 +236,7 @@ void updateParticles()
     }
     p.vx += v.vx * advection;
     p.vy += v.vy * advection;
-    
+
     p.x += p.vx * 0.016;
     p.y += p.vy * 0.016;
     p.vx *= viscosity;
